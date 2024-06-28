@@ -12,7 +12,7 @@ use crate::agent::{BoardField, PossibleMove};
 ///  [7,8,9]]
 ///
 pub struct GameState {
-    board: [[FieldState; 3]; 3],
+    board: Board,
 }
 
 impl GameState {}
@@ -82,6 +82,15 @@ impl FieldState {
     }
 }
 
+impl Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, " {} | {} | {}\n", &self.0[0][0], &self.0[0][1], &self.0[0][2])?;
+        write!(f, "------------\n")?;
+        write!(f, " {} | {} | {}\n", &self.0[1][0], &self.0[1][1], &self.0[1][2])?;
+        write!(f, "------------\n")?;
+        write!(f, " {} | {} | {}\n\n", &self.0[2][0], &self.0[2][1], &self.0[2][2])
+    }
+}
 impl Display for FieldState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
