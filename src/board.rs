@@ -6,10 +6,11 @@ pub struct Board(pub [[FieldState; 3]; 3]);
 impl Board {
     pub const EMPTY: Self = Self([[FieldState::Empty; 3]; 3]);
 
-    pub fn play_move_at(&mut self, board_pos: BoardFieldPosition) {
-        let (x, y) = board_pos.to_pos();
-        let cross_count = self.cross_count();
-        let circle_count = self.circle_count();
+    pub fn play_move_at(&mut self, board_pos: FieldPosition) {
+        let x = board_pos.x;
+        let y = board_pos.y;
+        let cross_count = self.field_state_count(FieldState::X);
+        let circle_count = self.field_state_count(FieldState::O);
 
         let field = &mut self.0[y][x];
         if *field != FieldState::Empty {
@@ -22,46 +23,25 @@ impl Board {
         }
     }
 
-    pub fn cross_count(&self) -> u64 {
+    pub fn field_state_count(&self, field_state: FieldState) -> usize {
         self.0
             .iter()
             .map(|row| {
                 row.iter()
-                    .map(|&field| match field {
-                        FieldState::X => 1,
-                        _ => 0,
-                    })
-                    .sum::<u64>()
+                    .filter(|&field| field == &field_state).count()
             })
             .sum()
     }
 
-    pub fn circle_count(&self) -> u64 {
-        self.0
-            .iter()
-            .map(|row| {
-                row.iter()
-                    .map(|&field| match field {
-                        FieldState::O => 1,
-                        _ => 0,
-                    })
-                    .sum::<u64>()
-            })
-            .sum()
-    }
-
-    pub fn get_empty_fields(&self) -> Vec<BoardFieldPosition> {
+    pub fn get_empty_fields_pos(&self) -> Vec<FieldPosition> {
         self.0
             .iter()
             .enumerate()
             .map(|(y, row)| {
                 row.iter()
                     .enumerate()
-                    .filter(|(_, field)| match field {
-                        FieldState::Empty => true,
-                        _ => false,
-                    })
-                    .map(move |(x, _)| BoardFieldPosition::from_pos(x, y))
+                    .filter(|(_, field)| field == &&FieldState::Empty)
+                    .map(move |(x, _)| FieldPosition::new(x, y))
             })
             .flatten()
             .collect()
@@ -143,6 +123,21 @@ pub enum FieldState {
     Empty = 0,
     X = 1,
     O = 2,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+pub struct FieldPosition {
+    pub x: usize,
+    pub y: usize
+}
+
+impl FieldPosition {
+    pub fn new(x: usize, y: usize) -> Self {
+        Self {
+            x,
+            y,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]

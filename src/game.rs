@@ -20,7 +20,7 @@ impl GameState {
         }
     }
 
-    pub fn run_new<F>(self, mut event_handler: F) where F: FnMut(GameEvent, &mut Board) {
+    pub fn run_new<F>(&self, mut event_handler: F) where F: FnMut(GameEvent, &mut Board) {
         let mut board = Board::EMPTY;
         loop {
             let event;
@@ -28,9 +28,12 @@ impl GameState {
                 FieldState::X =>  GameEvent::CrossWon,
                 FieldState::O =>  GameEvent::CircleWon,
                 _ => {
-                    let cross_count = board.cross_count();
-                    let circle_count = board.circle_count();
-                    if cross_count == circle_count {
+                    let cross_count = board.field_state_count(FieldState::X);
+                    let circle_count = board.field_state_count(FieldState::O);
+                    let empty_field_count = board.field_state_count(FieldState::Empty);
+                    if empty_field_count == 0 {
+                        GameEvent::Draw
+                    } else if cross_count == circle_count {
                         GameEvent::CrossTurn
                     } else if cross_count == (circle_count + 1) {
                         GameEvent::CircleTurn
@@ -42,7 +45,7 @@ impl GameState {
             event_handler(event, &mut board);
 
             match event {
-                GameEvent::CrossWon | GameEvent::CircleWon => break,
+                GameEvent::CrossWon | GameEvent::CircleWon | GameEvent::Draw => break,
                 _ => ()
             }
         }
@@ -53,6 +56,7 @@ impl GameState {
 pub enum GameEvent {
     CrossWon,
     CircleWon,
+    Draw,
     CrossTurn,
     CircleTurn,
     InvalidBoard
