@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Board(pub [[FieldState; 3]; 3]);
 
@@ -26,10 +24,7 @@ impl Board {
     pub fn field_state_count(&self, field_state: FieldState) -> usize {
         self.0
             .iter()
-            .map(|row| {
-                row.iter()
-                    .filter(|&field| field == &field_state).count()
-            })
+            .map(|row| row.iter().filter(|&field| field == &field_state).count())
             .sum()
     }
 
@@ -37,13 +32,12 @@ impl Board {
         self.0
             .iter()
             .enumerate()
-            .map(|(y, row)| {
+            .flat_map(|(y, row)| {
                 row.iter()
                     .enumerate()
                     .filter(|(_, field)| field == &&FieldState::Empty)
                     .map(move |(x, _)| FieldPosition::new(x, y))
             })
-            .flatten()
             .collect()
     }
 
@@ -97,21 +91,21 @@ impl Board {
         // Check each row for three of a kind
         for y in 0..3 {
             if is_all_same(&self.0[y]) {
-                return self.0[y][0]
+                return self.0[y][0];
             }
         }
         // Check each column for three of a kind
         for x in 0..3 {
             if is_all_same(&[self.0[0][x], self.0[1][x], self.0[2][x]]) {
-                return self.0[0][x]
+                return self.0[0][x];
             }
         }
         // Check diagonals for three of a kind
         if is_all_same(&[self.0[0][0], self.0[1][1], self.0[2][2]]) {
-            return self.0[1][1]
+            return self.0[1][1];
         }
         if is_all_same(&[self.0[2][0], self.0[1][1], self.0[0][2]]) {
-            return self.0[1][1]
+            return self.0[1][1];
         }
 
         FieldState::Empty
@@ -128,84 +122,37 @@ pub enum FieldState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
 pub struct FieldPosition {
     pub x: usize,
-    pub y: usize
+    pub y: usize,
 }
 
 impl FieldPosition {
     pub fn new(x: usize, y: usize) -> Self {
-        Self {
-            x,
-            y,
-        }
+        Self { x, y }
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
-pub enum BoardFieldPosition {
-    NorthWest,
-    North,
-    NorthEast,
-    West,
-    Center,
-    East,
-    SouthWest,
-    South,
-    SouthEast,
-}
-
-impl BoardFieldPosition {
-    pub fn from_pos(x: usize, y: usize) -> Self {
-        match (x, y) {
-            (0, 0) => Self::NorthWest,
-            (1, 0) => Self::North,
-            (2, 0) => Self::NorthEast,
-            (0, 1) => Self::West,
-            (1, 1) => Self::Center,
-            (2, 1) => Self::East,
-            (0, 2) => Self::SouthWest,
-            (1, 2) => Self::South,
-            (2, 2) => Self::SouthEast,
-            _ => unreachable!("Invalid board position! x: {}, y: {}", x, y),
-        }
-    }
-
-    pub fn to_pos(&self) -> (usize, usize) {
-        match self {
-            BoardFieldPosition::NorthWest => (0, 0),
-            BoardFieldPosition::North => (1, 0),
-            BoardFieldPosition::NorthEast => (2, 0),
-            BoardFieldPosition::West => (0, 1),
-            BoardFieldPosition::Center => (1, 1),
-            BoardFieldPosition::East => (2, 1),
-            BoardFieldPosition::SouthWest => (0, 2),
-            BoardFieldPosition::South => (1, 2),
-            BoardFieldPosition::SouthEast => (2, 2),
-        }
-    }
-}
-
-impl Display for Board {
+impl std::fmt::Display for Board {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
+        writeln!(
             f,
-            " {} | {} | {}\n",
+            " {} | {} | {}",
             &self.0[0][0], &self.0[0][1], &self.0[0][2]
         )?;
-        write!(f, "------------\n")?;
-        write!(
+        writeln!(f, "------------")?;
+        writeln!(
             f,
-            " {} | {} | {}\n",
+            " {} | {} | {}",
             &self.0[1][0], &self.0[1][1], &self.0[1][2]
         )?;
-        write!(f, "------------\n")?;
-        write!(
+        writeln!(f, "------------")?;
+        writeln!(
             f,
-            " {} | {} | {}\n\n",
+            " {} | {} | {}\n",
             &self.0[2][0], &self.0[2][1], &self.0[2][2]
         )
     }
 }
-impl Display for FieldState {
+impl std::fmt::Display for FieldState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             FieldState::Empty => write!(f, " "),

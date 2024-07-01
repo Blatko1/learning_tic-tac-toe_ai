@@ -9,24 +9,22 @@ use crate::board::{Board, FieldState};
 ///  [4,5,6],
 ///  [7,8,9]]
 ///
-pub struct GameState {
-    board: Board,
-}
+pub struct GameState {}
 
 impl GameState {
     pub fn new() -> Self {
-        Self {
-            board: Board::EMPTY
-        }
+        Self {}
     }
 
-    pub fn run_new<F>(&self, mut event_handler: F) where F: FnMut(GameEvent, &mut Board) {
+    pub fn run_new<F>(&self, mut event_handler: F)
+    where
+        F: FnMut(GameEvent, &mut Board),
+    {
         let mut board = Board::EMPTY;
         loop {
-            let event;
-            event = match board.find_winner() {
-                FieldState::X =>  GameEvent::CrossWon,
-                FieldState::O =>  GameEvent::CircleWon,
+            let event = match board.find_winner() {
+                FieldState::X => GameEvent::CrossWon,
+                FieldState::O => GameEvent::CircleWon,
                 _ => {
                     let cross_count = board.field_state_count(FieldState::X);
                     let circle_count = board.field_state_count(FieldState::O);
@@ -46,7 +44,7 @@ impl GameState {
 
             match event {
                 GameEvent::CrossWon | GameEvent::CircleWon | GameEvent::Draw => break,
-                _ => ()
+                _ => (),
             }
         }
     }
@@ -59,5 +57,5 @@ pub enum GameEvent {
     Draw,
     CrossTurn,
     CircleTurn,
-    InvalidBoard
+    InvalidBoard,
 }

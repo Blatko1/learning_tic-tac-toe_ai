@@ -24,18 +24,15 @@ impl Agent {
             Some(s) => s,
             None => return None,
         };
-        match self.board_memory.get(&saved_board) {
-            Some(actions) => Some(
-                actions
-                    .iter()
-                    .map(|action| AgentAction {
-                        field_pos: transformation.pos_to_original(action.field_pos),
-                        bias: action.bias,
-                    })
-                    .collect(),
-            ),
-            None => None,
-        }
+        self.board_memory.get(&saved_board).map(|actions| {
+            actions
+                .iter()
+                .map(|action| AgentAction {
+                    field_pos: transformation.pos_to_original(action.field_pos),
+                    bias: action.bias,
+                })
+                .collect()
+        })
     }
 
     pub fn play_greedy_exploration(&mut self, board: &Board) -> Option<FieldPosition> {
@@ -129,7 +126,7 @@ impl Agent {
 
     pub fn give_feedback(&mut self, reward: i32) {
         if reward > 0 {
-            self.epsilon = (self.epsilon * 0.995).max(0.15);
+            self.epsilon = (self.epsilon * 0.999).max(0.1);
         }
         for recorded_action in self.recorded_actions.drain(..) {
             let board = &recorded_action.board;
@@ -141,7 +138,7 @@ impl Agent {
                 .iter_mut()
                 .find(|saved_action| saved_action.field_pos == action.field_pos)
                 .unwrap();
-            saved_action.bias += reward;
+            saved_action.give_feedback(reward);
         }
     }
 
@@ -154,7 +151,7 @@ impl Agent {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AgentAction {
     pub field_pos: FieldPosition,
     pub bias: i32,
@@ -173,6 +170,12 @@ impl AgentAction {
 impl Ord for AgentAction {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.bias.cmp(&other.bias)
+    }
+}
+
+impl PartialOrd for AgentAction {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -206,38 +209,6 @@ impl BoardTransformation {
                 board.get_rotated_90_clockwise().get_rotated_90_clockwise()
             }
             BoardTransformation::Rotated90CCW => board.get_rotated_90_clockwise(),
-            BoardTransformation::FlippedHorizontally => board.get_flipped_horizontally(),
-            BoardTransformation::FlippedVertically => board.get_flipped_vertically(),
-            BoardTransformation::FlippedDiagonallySWNE => {
-                board.get_flipped_diagonally_southwest_northeast()
-            }
-            BoardTransformation::FlippedDiagonallyNWSE => {
-                board.get_flipped_diagonally_northwest_southeast()
-            }
-        };
-        for y in 0..3 {
-            for x in 0..3 {
-                if transformed_board.0[y][x] == FieldState::X {
-                    return FieldPosition::new(x, y);
-                }
-            }
-        }
-        unreachable!()
-    }
-
-    fn transform_pos(&self, pos: FieldPosition) -> FieldPosition {
-        let mut board = Board::EMPTY;
-        board.0[pos.y][pos.x] = FieldState::X;
-        let transformed_board = match self {
-            BoardTransformation::None => return pos,
-            BoardTransformation::Rotated90CW => board.get_rotated_90_clockwise(),
-            BoardTransformation::Rotated180 => {
-                board.get_rotated_90_clockwise().get_rotated_90_clockwise()
-            }
-            BoardTransformation::Rotated90CCW => board
-                .get_rotated_90_clockwise()
-                .get_rotated_90_clockwise()
-                .get_rotated_90_clockwise(),
             BoardTransformation::FlippedHorizontally => board.get_flipped_horizontally(),
             BoardTransformation::FlippedVertically => board.get_flipped_vertically(),
             BoardTransformation::FlippedDiagonallySWNE => {
